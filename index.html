@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User IP Addresses</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #34495e;
+            color: #ecf0f1;
+            text-align: center;
+            padding: 20px;
+        }
+        h1 {
+            font-size: 36px;
+            color: #3498db;
+        }
+        #ip-container {
+            background-color: #2c3e50;
+            border: 1px solid #2980b9;
+            border-radius: 5px;
+            padding: 20px;
+            margin: 20px auto;
+            max-width: 300px;
+        }
+        p {
+            font-size: 20px;
+        }
+        #local-ip, #public-ip {
+            font-weight: bold;
+            color: #e74c3c;
+        }
+    </style>
+</head>
+<body>
+    <h1>User IP Addresses</h1>
+    <div id="ip-container">
+        <p>Your Local IP Address:</p>
+        <p id="local-ip">Fetching...</p>
+        <p>Your Public IP Address:</p>
+        <p id="public-ip">Fetching...</p>
+    </div>
+
+    <script>
+        // Function to fetch and display the public IP address
+        async function getPublicIPAddress() {
+            try {
+                const publicIPResponse = await fetch('https://api.ipify.org?format=json');
+                const publicIPData = await publicIPResponse.json();
+                const publicIP = publicIPData.ip;
+                document.getElementById('public-ip').textContent = publicIP;
+            } catch (error) {
+                console.error('Error fetching public IP address:', error);
+                document.getElementById('public-ip').textContent = 'Error fetching public IP';
+            }
+        }
+
+        // Function to fetch and display the local IP address if possible
+        function getLocalIPAddress() {
+            try {
+                const RTCPeerConnection = window.RTCPeerConnection || window.mozRTCPeerConnection || window.webkitRTCPeerConnection;
+                const rtc = new RTCPeerConnection({iceServers: []});
+                rtc.createDataChannel('');
+                rtc.createOffer(async offerDesc => {
+                    await rtc.setLocalDescription(offerDesc);
+                }, () => {});
+
+                rtc.onicecandidate = function(e) {
+                    if (e.candidate) {
+                        const localIP = e.candidate.candidate.split(' ')[4];
+                        document.getElementById('local-ip').textContent = localIP;
+                        rtc.close();
+                    }
+                };
+            } catch (error) {
+                console.error('Error fetching local IP address:', error);
+                document.getElementById('local-ip').textContent = 'Error fetching local IP';
+            }
+        }
+
+        // Call the functions to fetch and display IP addresses when the page loads
+        getPublicIPAddress();
+        getLocalIPAddress();
+    </script>
+</body>
+</html>
